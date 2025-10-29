@@ -1,0 +1,2 @@
+# Run this script with the first parameter being a reference to the tsv file, and the second parameter being the output .npy file
+python convert_tsv_to_npy.py
