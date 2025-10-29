@@ -90,3 +90,5 @@ with open(output_filename, 'w') as f:
 print("\n--- Prediction Complete ---")
 print(f"Prediction: {predicted_label} (Confidence: {confidence:.6f})")
 print(f"Result saved to {output_filename}.")
+
+# Commiting as aeriab
