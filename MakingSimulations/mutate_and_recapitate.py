@@ -22,7 +22,7 @@ def mutate_and_recap(inFile, outFile,r,N,mu,Q):
 
       #simplify and sample
       individuals = pyslim.individuals_alive_at(rts, 0) #individuals alive at present
-      sample = np.random.choice(individuals, size=177,replace=False)
+      sample = np.random.choice(individuals, size=49,replace=False)
       keep_nodes = []
       for i in sample:
            keep_nodes.extend(rts.individual(i).nodes)
