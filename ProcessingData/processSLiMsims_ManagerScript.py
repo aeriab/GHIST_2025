@@ -10,7 +10,7 @@ OUTPUT_FILE = sys.argv[1] # Output numpy file name ex: all_sims.npy
 NUM_SAMPS = int(sys.argv[2]) # Number of samples per simulation
 WINDOW_SIZE = int(sys.argv[3]) # Size of the window
 
-input_files = sorted(glob.glob("/u/project/ngarud/Garud_lab/DANN_maya_slimulations/dann_slimulations_10246482/hard/*.txt"))  # adjust path if needed
+input_files = sorted(glob.glob("/u/project/ngarud/Garud_lab/DANN_maya_slimulations/dann_slimulations_11184279/neutral/*.txt"))  # adjust path if needed
 NUM_SIMS = len(input_files)
 DTYPE = np.float32
 SIM_SHAPE = (NUM_SAMPS, WINDOW_SIZE, 2)

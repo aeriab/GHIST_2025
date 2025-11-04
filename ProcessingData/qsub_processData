@@ -26,7 +26,7 @@ echo " "
 
 
 #run code
-python processSLiMsims_ManagerScript.py "HS_sims.npy" 50 102
+python processSLiMsims_ManagerScript.py "N_sims.npy" 50 102
 
 
 # echo job info on joblog:
