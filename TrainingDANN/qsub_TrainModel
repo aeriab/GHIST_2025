@@ -28,7 +28,7 @@ model_name='GRL_multiclass'
 
 mmap_neutral='/u/home/b/baeria/project-ngarud/GHISTBrendan/ProcessingData/neutrals.npy' # neutral processed simulations
 mmap_sweep='/u/home/b/baeria/project-ngarud/GHISTBrendan/ProcessingData/sweeps.npy' # sweep processed simulations
-mmap_target='/u/project/ngarud/Garud_lab/aDNA/TrainingData/target_N-H_ALL_RowFreq_n150_w201.npy' # processed GHIST dataset ####### NOT SET PROPERLY YET ###########
+mmap_target='/u/home/b/baeria/project-ngarud/GHISTBrendan/TrainingDANN/sorted_GHIST_data.npy' # processed GHIST dataset
 
 
 nvidia-smi --query-gpu=utilization.gpu,memory.used,memory.total --format=csv -l 60 > gpu_usage.log &
