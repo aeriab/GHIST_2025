@@ -28,11 +28,6 @@ print("GPU is", "available" if tf.config.list_physical_devices('GPU') else "NOT 
 print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
 
 
-#seed = 1994
-#tf.random.set_seed(seed)
-#np.random.seed(seed)
-#random.seed(seed)
-#strategy = tf.distribute.MirroredStrategy()
 
 ### --------- Mixed Precision Training -------------------#
 
@@ -41,24 +36,11 @@ print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('
 #mixed_precision.set_global_policy('mixed_float16')
 
 
-'''
-#### ----- tmp -------------
-
-class Histories(Callback):
-
-    def on_train_begin(self,logs={}):
-        self.losses = []
-        self.accuracies = []
-
-    def on_batch_end(self, batch, logs={}):
-        self.losses.append(logs.get('discriminator_loss'))
-        #self.accuracies.append(logs.get('acc'))
-'''
 ### ----------- Data generator --------------------#
 
 class CustomDataGen(Sequence):
    
-   def __init__(self,gene_sim_neu,gene_sim_hs,gene_sim_ss,gene_sim_tar,batch_size):#,src_neutral_train_idx,src_sweep_train_idx): 
+   def __init__(self,gene_sim_neu,gene_sim_hs,gene_sim_tar,batch_size):#,src_neutral_train_idx,src_sweep_train_idx): 
       '''
       Initialize data generator
       
@@ -67,7 +49,6 @@ class CustomDataGen(Sequence):
         batch size
       '''
       self.offsetHS=10**6 #constant to separate neutral from hard sweep simulations
-      self.offsetSS=10**10 #constant to separate neutral from soft sweep simulations
 
       #source data (comnstant Ne model) -- set so that same number of simulations in source and target domains
       ##############################################
@@ -75,49 +56,26 @@ class CustomDataGen(Sequence):
       print("tar shape",self.tar_data.shape)
       ############################################    
 
-
-      self.src_neutral =gene_sim_neu #[:192000,:,:,:] ##[:,:99,:,:]
+      self.src_neutral =gene_sim_neu 
       self.src_HS =gene_sim_hs #[:96000,:,:,:] ##[:,:99,:,:]
-      self.src_SS =gene_sim_ss #[:96000,:,:,:] # #[:,:99,:,:]
-      #self.src_neutral=self.src_neutral.astype(np.int32)
-      #self.src_HS=self.src_HS.astype(np.int32)
-      #self.src_SS=self.src_SS.astype(np.int32)
-
-      print(self.src_neutral.shape)
-
 
       src_neu_size = self.src_neutral.shape[0]
       src_HS_size = self.src_HS.shape[0]
-      src_SS_size = self.src_SS.shape[0]
 
-      print("TOTAL SIMULATIONS: ",(src_neu_size+src_HS_size+src_SS_size))
+      print("TOTAL SIMULATIONS: ",(src_neu_size+src_HS_size))
       print("TOTAL DATA: ",(self.tar_data.shape[0]))
   
       #define neutral and sweep indices
       src_neutral_idx = np.arange(self.src_neutral.shape[0])
       src_HS_idx = np.arange(self.src_HS.shape[0])
-      src_SS_idx = np.arange(self.src_SS.shape[0])
       tar_data_idx = np.arange(self.tar_data.shape[0])
 
-      self.src_idx_map = np.concatenate((src_neutral_idx,src_HS_idx+self.offsetHS,src_SS_idx+self.offsetSS))
+      self.src_idx_map = np.concatenate((src_neutral_idx,src_HS_idx+self.offsetHS))
       self.tar_idx_map = tar_data_idx 
 
       #define batch size     
       src_size=len(self.src_idx_map) #number of samples 
       tar_size=len(self.tar_idx_map)
-
-      '''
-      #oversample
-      # If source is larger, repeat target; if target is larger, repeat source
-      if src_size> tar_size:
-        print(self.tar_idx_map)
-        oversamp_size= src_size-tar_size
-        additional_samples = np.random.choice(tar_data_idx, size=oversamp_size, replace=True)
-        self.tar_idx_map=np.concatenate((tar_data_idx, additional_samples))
-        tar_size=len(self.tar_idx_map)
-        print(tar_size)
-      
-      '''
 
       #undersample
       self.batch_size = batch_size
@@ -147,9 +105,7 @@ class CustomDataGen(Sequence):
       classifier_batch_data = self.src_idx_map[classifier_batch_idx] # useful to separate data into neutral and sweep
 
       classifier_neutral_idx = classifier_batch_data[classifier_batch_data < self.offsetHS]
-      classifier_HS_idx = classifier_batch_data[(classifier_batch_data >= self.offsetHS) & (classifier_batch_data < self.offsetSS)]-self.offsetHS
-      classifier_SS_idx = classifier_batch_data[classifier_batch_data >= self.offsetSS]-self.offsetSS
-
+      discr_src_HS_idx = discr_src_batch_data[discr_src_batch_data >= self.offsetHS]-self.offsetHS
       # DISCRIMINATOR
       # half of data from discriminator comes from source (constant Ne) and half from target (bottleneck)
       # indices for source discriminator
@@ -157,8 +113,7 @@ class CustomDataGen(Sequence):
       discr_src_batch_data = self.src_idx_map[discr_src_batch_idx]
 
       discr_src_neutral_idx = discr_src_batch_data[discr_src_batch_data < self.offsetHS]
-      discr_src_HS_idx = discr_src_batch_data[(discr_src_batch_data >= self.offsetHS) & (discr_src_batch_data < self.offsetSS)]-self.offsetHS
-      discr_src_SS_idx = discr_src_batch_data[discr_src_batch_data >= self.offsetSS]-self.offsetSS
+      discr_src_HS_idx = discr_src_batch_data[discr_src_batch_data >= self.offsetHS]-self.offsetHS
   
       #indices for target data
       discr_tar_batch_idx = self.tar_discr_idx[idx*(self.batch_size//2):(idx+1)*(self.batch_size//2)] 
@@ -174,66 +129,35 @@ class CustomDataGen(Sequence):
       X_class_HS=self.src_HS[classifier_HS_idx] if len(classifier_HS_idx) > 0 else empty_arr
       X_disrc_src_HS= self.src_HS[discr_src_HS_idx] if len(discr_src_HS_idx) > 0 else empty_arr
 
-
-      X_class_SS= self.src_SS[classifier_SS_idx] if len(classifier_SS_idx) > 0 else empty_arr
-      X_disrc_src_SS= self.src_SS[discr_src_SS_idx] if len(discr_src_SS_idx) > 0 else empty_arr
-      
-
       X_disrc_tar = self.tar_data[discr_tar_batch_data_idx]
 
         
-      batch_X=np.concatenate((X_class_neutral,X_class_HS,X_class_SS,
-                              X_disrc_src_neutral, X_disrc_src_HS, X_disrc_src_SS,
+      batch_X=np.concatenate((X_class_neutral,X_class_HS,
+                              X_disrc_src_neutral, X_disrc_src_HS,
                               X_disrc_tar))
       
       
       #create output Y for batch
-      neutral_label = np.array([1., 0., 0.])
-      HS_label = np.array([0., 1., 0.])
-      SS_label = np.array([0., 0., 1.])
+      neutral_label = np.array([0.0])
+      HS_label = np.array([1.0])
 
       #It is possible that for some categories (neutral/hard/soft) I have an empty list -- so double check and account for empty lists
       neutral_class_vstack= np.vstack([neutral_label]*len(classifier_neutral_idx)) if len(classifier_neutral_idx) > 0 else np.empty((0, neutral_label.shape[0]))
       neutral_discr_src_vstack= -1 * np.vstack([neutral_label] * len(discr_src_neutral_idx)) if len(discr_src_neutral_idx) > 0 else np.empty((0, neutral_label.shape[0]))
-      #neutral_discr_tar_vstack= -1 * np.vstack([neutral_label] * len(discr_tar_neutral_idx)) if len(discr_tar_neutral_idx) > 0 else np.empty((0, neutral_label.shape[0]))
       
       hs_class_vstack = np.vstack([HS_label]*len(classifier_HS_idx)) if len(classifier_HS_idx) > 0 else np.empty((0, HS_label.shape[0]))
       hs_discr_src_vstack = -1 * np.vstack([HS_label] * len(discr_src_HS_idx)) if len(discr_src_HS_idx) > 0 else np.empty((0, HS_label.shape[0]))
-      #hs_discr_tar_vstack = -1 * np.vstack([HS_label] * len(discr_tar_HS_idx)) if len(discr_tar_HS_idx) > 0 else np.empty((0, HS_label.shape[0]))
       
-      ss_class_vstack =np.vstack([SS_label]*len(classifier_SS_idx)) if len(classifier_SS_idx) > 0 else np.empty((0, SS_label.shape[0])) # check idx 1 or 0
-      ss_discr_src_vstack = -1 * np.vstack([SS_label] * len(discr_src_SS_idx)) if len(discr_src_SS_idx) > 0 else np.empty((0, SS_label.shape[0]))
-      #ss_discr_tar_vstack = -1 * np.vstack([SS_label] * len(discr_tar_SS_idx)) if len(discr_tar_SS_idx) > 0 else np.empty((0, SS_label.shape[0]))
-
       discr_tar_vstack = -1 * np.vstack([neutral_label] * len(discr_tar_batch_data_idx))
 
-      '''
-      print("neutral class:", neutral_class_vstack.shape)
-      print("HS class:", hs_class_vstack.shape)
-      print("SS class:", hs_class_vstack.shape)
-
-      print("neutral discr src:", neutral_discr_src_vstack.shape)
-      print("HS discr src:", hs_discr_src_vstack.shape)
-      print("SS discr src:", ss_discr_src_vstack.shape)
-
-      print("neutral discr tar:", neutral_discr_tar_vstack.shape)
-      print("HS discr tar:", hs_discr_tar_vstack.shape)
-      print("SS discr tar:", ss_discr_tar_vstack.shape)
-      '''
-      
-
-      batch_Y_classifier = np.concatenate((neutral_class_vstack,hs_class_vstack,ss_class_vstack,
-                                           neutral_discr_src_vstack,hs_discr_src_vstack,ss_discr_src_vstack,
+      batch_Y_classifier = np.concatenate((neutral_class_vstack,hs_class_vstack,
+                                           neutral_discr_src_vstack,hs_discr_src_vstack,
                                            discr_tar_vstack))
       
-      batch_Y_discr = np.concatenate((-1*np.ones(len(classifier_neutral_idx)),-1*np.ones(len(classifier_HS_idx)),-1*np.ones(len(classifier_SS_idx)),
-                                            np.zeros(len(discr_src_neutral_idx)),np.zeros(len(discr_src_HS_idx)),np.zeros(len(discr_src_SS_idx)),
+      batch_Y_discr = np.concatenate((-1*np.ones(len(classifier_neutral_idx)),-1*np.ones(len(classifier_HS_idx)),
+                                            np.zeros(len(discr_src_neutral_idx)),np.zeros(len(discr_src_HS_idx)),
                                             np.ones(len(discr_tar_batch_data_idx))))
 
-
-      #check dimensions of data
-      #print("batch X shape:", batch_X.shape)
-      #print("batch size:",self.batch_size)
 
       assert batch_X.shape[0] == self.batch_size*2, batch_X.shape[0]
       assert batch_Y_classifier.shape[0] == batch_Y_discr.shape[0], (batch_Y_classifier, batch_Y_discr)
@@ -398,8 +322,7 @@ def create_model(mmap_sim,loss_weights):
     dense_branch1_layer2 = Dropout(0.5, name="last_hidden_layer_classifier")(dense_branch1_layer2)
 
     # Output layer
-    output_branch1 = Dense(3, activation='softmax', name='classifier',dtype='float32')(dense_branch1_layer2) #softmax activation for mutliclass output with 3 classes
-
+    output_branch1 = Dense(1, activation='sigmoid', name='classifier',dtype='float32')(dense_branch1_layer2) #sigmoid activation for binary classifucation
     # Second branch / GRL layer to discriminate domains
     GRL_branch2 = GradReverse()(flatten)
     dense_branch2_layer1 = Dense(128)(GRL_branch2)
@@ -426,9 +349,9 @@ def create_model(mmap_sim,loss_weights):
     #change loss finction according to problem (binary or multiclass classification)
 
 
-    model.compile(optimizer=optimizer,loss={'classifier':custom_categorical_ce,'discriminator':custom_bce }, #custom_bce
+    model.compile(optimizer=optimizer,loss={'classifier':custom_bce,'discriminator':custom_bce }, #custom_bce
                   loss_weights = [alpha,beta],#equal loss weights I have to change this if losses are not on same scale so that they have equal weights (i.e binary versus multiclas loss)
-                  metrics={'classifier': custom_categorical_accuracy,'discriminator': custom_binary_accuracy}) 
+                  metrics={'classifier': custom_binary_accuracy,'discriminator': custom_binary_accuracy}) 
 
 
     return model
@@ -436,7 +359,7 @@ def create_model(mmap_sim,loss_weights):
 def intermediate_layer_model(model,layer_name):
     return  Model(inputs=model.input, outputs=model.get_layer(layer_name).output)
 
-def train_model(model,gene_sim_neu,gene_sim_hs,gene_sim_ss,gene_sim_traintar,val_split,batch_size,loss_weights,path):
+def train_model(model,gene_sim_neu,gene_sim_hs,gene_sim_traintar,val_split,batch_size,loss_weights,path):
     """
     train CNN model 
 
@@ -470,28 +393,8 @@ def train_model(model,gene_sim_neu,gene_sim_hs,gene_sim_ss,gene_sim_traintar,val
     print(gene_sim_traintar.data[1][20:30,30:40,0])
     '''
     #no validation data
-    data_gen=CustomDataGen(gene_sim_neu=gene_sim_neu,gene_sim_hs=gene_sim_hs,gene_sim_ss=gene_sim_ss,gene_sim_tar = gene_sim_traintar,batch_size=batch_size)
+    data_gen=CustomDataGen(gene_sim_neu=gene_sim_neu,gene_sim_hs=gene_sim_hs,gene_sim_tar = gene_sim_traintar,batch_size=batch_size)
     
-    print(len(data_gen))
-    print(gene_sim_traintar.shape)
-
-    '''
-    dataset = tf.data.Dataset.from_generator(
-    lambda: data_gen,
-    output_signature=(
-        tf.TensorSpec(shape=data_gen[0][0].shape, dtype=tf.float32),  # Adjust to your `batch_X` shape
-        {
-            "classifier": tf.TensorSpec(shape=data_gen[0][1]["classifier"].shape, dtype=tf.float32),
-            "discriminator": tf.TensorSpec(shape=data_gen[0][1]["discriminator"].shape, dtype=tf.float32),
-        }
-    ))
-    # Adjust dataset options to disable auto-sharding
-    options = tf.data.Options()
-    options.experimental_distribute.auto_shard_policy = AutoShardPolicy.OFF
-    dataset = dataset.with_options(options)
-    print(dataset)
-    steps_per_epoch = 2006 #len(dataset[0]) // 128
-    '''
 
     # ----------------------------------------------------------------
     
@@ -517,9 +420,11 @@ def train_model(model,gene_sim_neu,gene_sim_hs,gene_sim_ss,gene_sim_traintar,val
     plot_loss(score)
     
     #save training data
+
     loss = score.history['loss']
-    accuracy_class = score.history['classifier_custom_categorical_accuracy']
+    accuracy_class = score.history['classifier_custom_binary_accuracy']
     accuracy_discr = score.history['discriminator_custom_binary_accuracy']
+
     loss_class = score.history['classifier_loss']
     loss_discr = score.history['discriminator_loss']
 
@@ -531,25 +436,6 @@ def train_model(model,gene_sim_neu,gene_sim_hs,gene_sim_ss,gene_sim_traintar,val
 
     return model,score
 
-def test_shuffled_data(model,test_X):
-    
-     #change 0's to -1
-    test_X[test_X==0] = -1
-    # substitute nan's to 0's
-    test_X[np.isnan(test_X)] = 0
-
-    #print(test_X[1][:,50:70,0])
-    #print(test_X[1][:,50:70,0])
- 
-    test_Y=np.vstack([np.array([1., 0., 0.])]*test_X.shape[0])
-    test_scores = model.evaluate(test_X,  {'classifier': test_Y}, verbose=2)
-    print(test_scores)
-    #prediction
-    y_pred = model.predict(test_X)
-
-    print(y_pred[0].shape)
-    np.savetxt('predictions.txt', y_pred[0], fmt='%.4f')
-    #get percentage of neutral
 
 def save_model_architecture(model,path):
     model_json = model.to_json()
@@ -590,7 +476,7 @@ def load_grl_model_lambdaScheduler(path):
     loaded_model.load_weights(weights_file_name)
 
     loaded_model.compile(optimizer=optimizer,loss={'classifier':custom_bce,'discriminator':custom_bce }, #custom_bce
-                        metrics={'classifier': custom_categorical_accuracy,'discriminator': custom_binary_accuracy}) 
+                        metrics={'classifier': custom_binary_accuracy,'discriminator': custom_binary_accuracy})
 
     return loaded_model
 
@@ -620,8 +506,8 @@ def load_cnn_model_weights(path_model,path_weights):
 def plot_accuracy(score):
     # summarize history for accuracy
     #classifier accuracy
-    print(score.history['classifier_custom_categorical_accuracy'])
-    plt.plot(score.history['classifier_custom_categorical_accuracy'])
+    print(score.history['classifier_custom_binary_accuracy'])
+    plt.plot(score.history['classifier_custom_binary_accuracy'])
     plt.title('classifier accuracy')
     plt.ylabel('classifier accuracy')
     plt.xlabel('epoch')
@@ -728,3 +614,4 @@ def precision_recall(gene_sim_test,y_pred,output_names):
     plt.legend()
     plt.savefig('auprc.png')
     plt.close()
+

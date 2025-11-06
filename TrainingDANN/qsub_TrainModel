@@ -34,7 +34,7 @@ mmap_target='/u/home/b/baeria/project-ngarud/GHISTBrendan/TrainingDANN/sorted_GH
 nvidia-smi --query-gpu=utilization.gpu,memory.used,memory.total --format=csv -l 60 > gpu_usage.log &
 
 #run code
-python main_train.py model_name mmap_neutral mmap_sweep mmap_target ##### NOT SET PROPERLY YET #####
+python main_train.py model_name mmap_neutral mmap_sweep mmap_target
 
 # echo job info on joblog:
 echo "Job $JOB_ID ended on:   " `hostname -s`
