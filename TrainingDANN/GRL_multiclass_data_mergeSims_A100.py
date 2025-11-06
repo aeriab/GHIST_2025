@@ -104,6 +104,15 @@ class CustomDataGen(Sequence):
       classifier_batch_idx = self.src_classifier_idx[idx*self.batch_size:(idx+1)*self.batch_size]
       classifier_batch_data = self.src_idx_map[classifier_batch_idx] # useful to separate data into neutral and sweep
 
+      classifier_HS_idx = classifier_batch_data[classifier_batch_data >= self.offsetHS]-self.offsetHS
+
+      # DISCRIMINATOR
+      # half of data from discriminator comes from source (constant Ne) and half from target (bottleneck)
+      # indices for source discriminator
+      discr_src_batch_idx = self.src_discr_idx[idx*(self.batch_size//2):(idx+1)*(self.batch_size//2)]
+      discr_src_batch_data = self.src_idx_map[discr_src_batch_idx]
+
+
       classifier_neutral_idx = classifier_batch_data[classifier_batch_data < self.offsetHS]
       discr_src_HS_idx = discr_src_batch_data[discr_src_batch_data >= self.offsetHS]-self.offsetHS
       # DISCRIMINATOR

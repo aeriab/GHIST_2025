@@ -15,6 +15,10 @@ mmap_neutral = np.load(mmap_neutral_path, mmap_mode='r')
 mmap_sweep = np.load(mmap_sweep_path, mmap_mode='r') 
 mmap_target = np.load(mmap_target_path, mmap_mode='r') 
 
+mmap_neutral = np.expand_dims(mmap_neutral, axis=-1)
+mmap_sweep = np.expand_dims(mmap_sweep, axis=-1)
+mmap_target = np.expand_dims(mmap_target, axis=-1)
+
 
 ### --------- Parameters -------------------#
 initial_loss_weights=[1,0] #[1,0]

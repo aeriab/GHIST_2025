@@ -1,2 +1,20 @@
-# Run this script with the first parameter being a reference to the tsv file, and the second parameter being the output .npy file
-python convert_tsv_to_npy.py
+# Navigate to the ReformatGHISTData folder and convert the tsv file to a usable npy file
+cd ReformatGHISTData
+python createTargetNpy.py
+python sortMyData.py
+
+# Navigate to ProcessingData and make npy files from the pre-made SLiM simulations
+cd ..
+cd ProcessingData
+qsub qsub_processData
+# Now go into the "qsub_processData" script and change "Neutral" to "Sweep"
+# Also go into the "processSLiMsims_ManagerScript" script and change the input files from neutral to hard
+# Change any input and output names on these scripts from "neutral" to "sweep" and run the qsub again
+qsub qsub_processData
+
+# Navigate to TrainingDANN and set up the proper directory for the .npy files we created as input
+cd ..
+cd TrainingDANN
+qsub qsub_TrainModel
+
+# Now you have trained the DANN, and can see how each of the 30 epochs has performed by observing the generated plots and the training_multiclass_results.txt output file
