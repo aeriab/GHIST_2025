@@ -14,7 +14,7 @@ else
 fi
 
 echo "Adding all files..."
-git add .
+git add -A
 
 echo "Committing with message: '$COMMIT_MESSAGE'"
 git commit -m "$COMMIT_MESSAGE"
