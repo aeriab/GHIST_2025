@@ -1,0 +1,9 @@
+name: tf_A100_clean
+channels:
+  - defaults
+dependencies:
+  - python=3.9
+  - cudatoolkit=11.8
+  - cudnn
+  - pandas
+prefix: /u/project/ngarud/baeria/tf_A100_clean

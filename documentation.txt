@@ -18,3 +18,13 @@ cd TrainingDANN
 qsub qsub_TrainModel
 
 # Now you have trained the DANN, and can see how each of the 30 epochs has performed by observing the generated plots and the training_multiclass_results.txt output file
+
+###################   TRAINING COMPLETE   ###################
+
+# For predicting using your pre-trained model, run the predict.py script like so:
+cd TrainingDANN
+python predict.py GRL_multiclass_model_model.json GRL_multiclass_model.11.weights.h5 my_haplotype_image.npy
+
+# example:
+python predict.py "/u/home/b/baeria/project-ngarud/GHISTBrendan/TrainingDANN/TrainingNov9/GRL_multiclass_model.json" "/u/home/b/baeria/project-ngarud/GHISTBrendan/TrainingDANN/TrainingNov9/GRL_multiclass.11.weights.h5" "/u/home/b/baeria/project-ngarud/GHISTBrendan/ReformatGHISTData/single_sorted_GHIST.npy"
+

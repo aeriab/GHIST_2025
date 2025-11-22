@@ -12,8 +12,8 @@ except ImportError:
     sys.exit(1)
 
 # --- Configuration ---
-INPUT_NPY_FILE = 'GHIST_data.npy' # The file from our previous step
-OUTPUT_NPY_FILE = 'sorted_GHIST_data.npy'
+INPUT_NPY_FILE = 'growth_bg.npy' # The file from our previous step
+OUTPUT_NPY_FILE = 'sorted_growth_bg_21.npy'
 SORT_ORDERING = 'rows_freq' # Use 'rows_freq' or 'rows_dist'
 # ---------------------
 
