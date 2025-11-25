@@ -28,3 +28,14 @@ python predict.py GRL_multiclass_model_model.json GRL_multiclass_model.11.weight
 # example:
 python predict.py "/u/home/b/baeria/project-ngarud/GHISTBrendan/TrainingDANN/TrainingNov9/GRL_multiclass_model.json" "/u/home/b/baeria/project-ngarud/GHISTBrendan/TrainingDANN/TrainingNov9/GRL_multiclass.11.weights.h5" "/u/home/b/baeria/project-ngarud/GHISTBrendan/ReformatGHISTData/single_sorted_GHIST.npy"
 
+
+# CSV files for the GHIST data can be found here: /u/project/ngarud/peterlau/GHIST_2025/haplotypes_csv
+GHIST_2025_singlesweep.21.testing.haplotype.csv
+GHIST_2025_multisweep.21.testing.haplotype.csv
+GHIST_2025_singlesweep.growth_bg.21.testing.haplotype.csv
+GHIST_2025_multisweep.growth_bg.21.testing.haplotype.csv
+GHIST_2025_singlesweep.15.final.haplotype.csv
+GHIST_2025_multisweep.15.final.haplotype.csv
+GHIST_2025_singlesweep.growth_bg.15.final.haplotype.csv
+GHIST_2025_multisweep.growth_bg.15.final.haplotype.csv
+

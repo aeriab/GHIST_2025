@@ -13,12 +13,11 @@ except ImportError:
 
 # --- Configuration ---
 INPUT_NPY_FILE = 'growth_bg.npy' # The file from our previous step
-OUTPUT_NPY_FILE = 'sorted_growth_bg_21.npy'
-SORT_ORDERING = 'rows_freq' # Use 'rows_freq' or 'rows_dist'
+OUTPUT_NPY_FILE = 'sorted_growth_bg.npy'
+SORT_ORDERING = 'rows_dist' # Use 'rows_freq' or 'rows_dist'
 # ---------------------
 
 print(f"Loading data from {INPUT_NPY_FILE}...")
-# Load the big file, e.g., shape (1468, 50, 102)
 all_data = np.load(INPUT_NPY_FILE)
 
 # Get the dimensions

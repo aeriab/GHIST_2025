@@ -1,8 +1,11 @@
 import numpy as np
 
 # --- Parameters ---
-input_tsv_file1 = 'GHIST_2025_singlesweep.growth_bg.21.testing.haplotype.tsv'  # The name of your input TSV file
-input_tsv_file2 = 'GHIST_2025_multisweep.growth_bg.21.testing.haplotype.tsv'
+input_tsv_file1 = '/u/project/ngarud/peterlau/GHIST_2025/haplotypes_csv/GHIST_2025_singlesweep.growth_bg.21.testing.haplotype.csv'  # The name of your input TSV file
+input_tsv_file2 = '/u/project/ngarud/peterlau/GHIST_2025/haplotypes_csv/GHIST_2025_multisweep.growth_bg.21.testing.haplotype.csv'
+input_tsv_file3 = '/u/project/ngarud/peterlau/GHIST_2025/haplotypes_csv/GHIST_2025_singlesweep.growth_bg.15.final.haplotype.csv'
+input_tsv_file4 = '/u/project/ngarud/peterlau/GHIST_2025/haplotypes_csv/GHIST_2025_multisweep.growth_bg.15.final.haplotype.csv'
+
 output_npy_file = 'growth_bg.npy' # The name of the .npy file to be saved
 
 sites_per_image = 102
@@ -11,9 +14,9 @@ num_chromosomes = 50
 image_list = []
 
 # Process the two files sequentially
-for file_path in [input_tsv_file1, input_tsv_file2]:
+for file_path in [input_tsv_file1, input_tsv_file2, input_tsv_file3, input_tsv_file4]:
     # Load data: skip header (row 1), grab cols 2-51 (indices 1-51)
-    raw_data = np.loadtxt(file_path, delimiter='\t', skiprows=1, usecols=range(3, 53))
+    raw_data = np.loadtxt(file_path, delimiter=',', skiprows=1, usecols=range(3, 53))
     
     num_snps = raw_data.shape[0]
     
