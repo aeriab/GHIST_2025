@@ -13,7 +13,7 @@ WINDOW_SIZE = int(sys.argv[3]) # Size of the window
 input_files = sorted(glob.glob("/u/project/ngarud/Garud_lab/DANN_maya_slimulations/dann_slimulations_11184279/neutral/*.txt"))  # adjust path if needed
 NUM_SIMS = len(input_files)
 DTYPE = np.float32
-SIM_SHAPE = (NUM_SAMPS, WINDOW_SIZE, 2)
+SIM_SHAPE = (NUM_SAMPS, WINDOW_SIZE)
 print(f"Found {NUM_SIMS} simulation files to process.")
 # -------------------------------------------------------------------
 
@@ -34,7 +34,8 @@ for i, infile in enumerate(input_files):
             OUTPUT_FILE,
             str(NUM_SAMPS),
             str(WINDOW_SIZE),
-            str(i)
+            str(i),
+            str(NUM_SIMS)
         ],
         check=True,
     )

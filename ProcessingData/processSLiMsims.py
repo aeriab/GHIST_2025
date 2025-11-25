@@ -78,23 +78,15 @@ def create_haplotype_matrix(mut_type_dict, mut_pos_dict, pos_to_idx_dict, genome
     """
 
     # Initialize the haplotype matrix
-    mut_array = np.zeros((len(genomes_dict), len(pos_to_idx_dict), 2), dtype=int)
+    mut_array = np.zeros((len(genomes_dict), len(pos_to_idx_dict)), dtype=int)
         
     # Fill the numpy array with mutation data
     for i, sample_id in enumerate(genomes_dict):
         #print(i, sample_id)
         mutation_id_in_sample= genomes_dict[sample_id] # List of mutation IDs for the sample
         positions_idx = [pos_to_idx_dict[mut_pos_dict[id]] for id in mutation_id_in_sample] # Get the indices of the positions
-      
-        mut_array[i,positions_idx, 0] = 1 # Set the mutation presence to 1
         
-        # Set the mutation type in the second channel of the array
-        for id, pos_idx in zip(mutation_id_in_sample, positions_idx):
-            if float(mut_type_dict[id]) != 0: # if selection coefficient not 0, set to non-synonymous
-                mut_array[i, pos_idx, 1] = 1
-            # If you want to use mutation type (e.g., 'm1', 'm2') instead of selection coefficient, uncomment below
-            #if mut_type_dict[id] != 'm1':
-            #    mut_array[i, pos_idx, 1] = 1
+        mut_array[i, positions_idx] = 1
 
 
     return mut_array
@@ -113,7 +105,7 @@ def sample_haplotypes(mut_array, n_samples):
     total_samples = mut_array.shape[0]
     random_indices = np.random.choice(total_samples, n_samples, replace=False) # Sample without replacement
     random_indices.sort()
-    sampled_mut_array = mut_array[random_indices,:,:] # Select the sampled haplotypes
+    sampled_mut_array = mut_array[random_indices, :]
     
     return sampled_mut_array
 
@@ -138,11 +130,11 @@ def crop(mut_array, window_size, sparse=False):
         if sparse: 
             random_sites = np.random.choice(mut_array_window_size, window_size, replace=False) # Sample random SNPs without replacement
             random_sites.sort()
-            mut_array_sub = mut_array[:, random_sites, :]
+            mut_array_sub = mut_array[:, random_sites]
             return mut_array_sub
         else:
             start_window_idx = mut_array_window_size//2 - window_size//2
-            mut_array_sub = mut_array[:, start_window_idx:start_window_idx+window_size, :]
+            mut_array_sub = mut_array[:, start_window_idx:start_window_idx+window_size]
             return mut_array_sub
 
 
@@ -157,9 +149,9 @@ def major_minor(mut_array):
         np.ndarray: A numpy array where the major with major allele =0 minor allele = 1
     """
     # Identify positions where the allele frequency of mutation 1 is greater than 0.5
-    idx= np.where(np.nanmean(mut_array[:,:,0], axis=0)>0.5) #find positions allele is > 0.5 frequency (make sure that is coded as 1, otherwise normalize)
-    
-    mut_array[:,idx,0]=1-mut_array[:,idx,0] #flip to minor allele
+    idx = np.where(np.nanmean(mut_array, axis=0) > 0.5)
+
+    mut_array[:, idx] = 1 - mut_array[:, idx]
 
     # If you want to flit to major =1 minor =0
     #mut_array[:,:,0] =1-mut_array[:,:,0] #flip to major =1 minor =0
@@ -292,7 +284,7 @@ def sort_haplotypes(mut_array,ordering=None):
     samples_dict_synnonsyn = {} 
 
     for j,row in enumerate(mut_array):
-        samples_dict[j] = row[:,0] #only major minor coding to use as input for clustering
+        samples_dict[j] = row
         samples_dict_synnonsyn[j] = row #  full data with syn nonsyn to use sample indexes after clustering
     
     #cluster haplotypes
@@ -313,7 +305,7 @@ def sort_haplotypes(mut_array,ordering=None):
                         #gene_data_sorted_lst.append(samples_dict[id])
             gene_data_sorted = np.array(gene_data_sorted_lst)
 
-            mut_array[:,:,:] = gene_data_sorted
+            mut_array[:, :] = gene_data_sorted
 
         #sort by distance to major haplotype
         if ordering == 'rows_dist':
@@ -325,7 +317,7 @@ def sort_haplotypes(mut_array,ordering=None):
             for hap in haps_clumped_distance_sort.keys():
                 # next I want to get all the samples in the full window with subhaplotype hap and order acording to frequency
                 ids_hap = haps_clumped[hap] # list of sample ids with that haplotype
-                data_hap = mut_array[ids_hap,:,0] # get the data for those samples
+                data_hap = mut_array[ids_hap, :]
                 [haps_clumped_window, haps_clumped_count_window] =clusterHaps(data_hap.shape[0],data_hap) # this is giving me line numbers based on subhap
                 haps_clumped_count_window_sort =dict(sorted(haps_clumped_count_window.items(), key=lambda item: item[1], reverse=True))    
                 #now sort data
@@ -337,7 +329,7 @@ def sort_haplotypes(mut_array,ordering=None):
                     #    gene_data_sorted_lst.append(samples_dict_synnonsyn[id])
             gene_data_sorted = np.array(gene_data_sorted_lst)
 
-            mut_array[:,:,:] = gene_data_sorted
+            mut_array[:, :] = gene_data_sorted
 
     return mut_array
 
@@ -348,8 +340,8 @@ def sort_haplotypes(mut_array,ordering=None):
 if __name__ == "__main__":
 
     # Check for correct number of command-line arguments
-    if len(sys.argv) != 6:
-        print("Usage: python processSLiMsims.py <input_slim_file> <output_npy_file> <n_samples> <window_size><index>")
+    if len(sys.argv) != 7:
+        print("Usage: python processSLiMsims.py <input_slim_file> <output_npy_file> <n_samples> <window_size> <index> <n_sims>")
         sys.exit(1)
 
     # Read command-line arguments
@@ -358,6 +350,7 @@ if __name__ == "__main__":
     NUM_SAMPS = int(sys.argv[3]) #number of haplotypes to sample ex: 100
     WINDOW_SIZE = int(sys.argv[4]) #window size in number of SNPs ex: 201
     INDEX= int(sys.argv[5]) #index in big array to store results
+    NUM_SIMS = int(sys.argv[6])
 
 
     # Parse the SLiM simulation file and generate dictionaries with mutation and genome data
@@ -384,9 +377,9 @@ if __name__ == "__main__":
     #np.save(output_path, mut_array_sorted)
     # Open big file in write mode and store directly
     big_array = np.lib.format.open_memmap(
-        OUTPUT_PATH, dtype=np.float32, mode="r+", shape=(2, NUM_SAMPS, WINDOW_SIZE, 2)
+        OUTPUT_PATH, dtype=np.float32, mode="r+", shape=(NUM_SIMS, NUM_SAMPS, WINDOW_SIZE)
     )
-    #print(big_array.shape)
+    
     big_array[INDEX] = mut_array_sorted
 
     del big_array  # flush changes
